@@ -18,10 +18,11 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
 // Middleware
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true, // allow cookies across origins
+    origin: ["https://www.kumarkdsacourse.in", "http://localhost:3000"],
+    credentials: true, // 🔥 REQUIRED
   })
 );
+
 app.use(express.json());
 
 // Session middleware (BEFORE passport)
