@@ -40,7 +40,7 @@ import MongoStore from "connect-mongo";
 app.use(
   session({
     name: "sessionId",
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || "dev-secret",
     resave: false,
     saveUninitialized: false,
     proxy: true, // 🔥 IMPORTANT
