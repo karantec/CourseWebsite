@@ -15,12 +15,24 @@ async function seed() {
         month: "January",
         role: "student",
       },
-      // {
-      //   name: "Aaron Magic",
-      //   email: "aaronmagicnew@gmail.com",
-      //   month: "January",
-      //   role: "student",
-      // },
+      {
+        name: "Bhargab Sarmah",
+        email: "karanrana3095@gmail.com",
+        month: "January",
+        role: "student",
+      },
+      {
+        name: "Aaron Magic",
+        email: "aaronmagicnew@gmail.com",
+        month: "January",
+        role: "student",
+      },
+      {
+        name: "Aaron Magic",
+        email: "karangujar43@gmail.com",
+        month: "January",
+        role: "student",
+      },
     ],
 
     // {

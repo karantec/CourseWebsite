@@ -13,7 +13,7 @@ import { ensureAuth } from "./middleware/authMiddleware.js";
 dotenv.config();
 const app = express();
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
+// const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
 
 // Middleware
 app.use(
@@ -28,25 +28,26 @@ app.use(express.json());
 // Session middleware (BEFORE passport)
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "secretkey",
+    secret: "keyboard cat",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false, // false for local dev (true in production with HTTPS)
       httpOnly: true,
-      sameSite: "lax", // 'lax' usually works for OAuth redirect flows on localhost
-      // maxAge: 1000 * 60 * 60 * 24, // optional: 1 day
+      secure: false, // 🔥 localhost ONLY
+      sameSite: "lax", // 🔥 localhost ONLY
+      maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
 
+/* ✅ PASSPORT AFTER SESSION */
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Routes
 app.use("/auth", authRoutes);
 app.use("/course", ensureAuth, courseRoutes);
-
+app.disable("etag");
 // Connect DB
 mongoose
   .connect(process.env.MONGO_URI)

@@ -1,67 +1,97 @@
-// routes/authRoutes.js
 import express from "express";
 import passport from "passport";
 
 const router = express.Router();
-const FRONTEND = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
+const FRONTEND = "https://www.kumarkdsacourse.in";
 
-// Start Google login: save month in session then kick off oauth
-router.get("/google", (req, res, next) => {
-  const { month } = req.query;
-  if (!month) {
-    return res.redirect(`${FRONTEND}/login?error=select_month`);
-  }
-  // Save selected month in session so strategy can read it on callback
-  req.session.authMonth = month;
-  passport.authenticate("google", { scope: ["profile", "email"] })(
-    req,
-    res,
-    next
-  );
-});
+/* =====================================================
+   STEP 1: Start Google Login
+===================================================== */
+router.get(
+  "/google",
+  (req, res, next) => {
+    const { month } = req.query;
 
-// Google callback using custom callback so we can control redirects and clear session
+    if (!month) {
+      return res.redirect(`${FRONTEND}/?error=select_month`);
+    }
+
+    req.session.authMonth = month;
+    next();
+  },
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
+
+/* =====================================================
+   STEP 2: Google Callback
+===================================================== */
 router.get("/google/callback", (req, res, next) => {
-  passport.authenticate("google", (err, user, info) => {
-    // clear stored month to avoid stale data
-    if (req.session) req.session.authMonth = null;
+  passport.authenticate("google", (err, user) => {
+    req.session.authMonth = null;
 
-    if (err) {
-      console.error("Google auth error:", err);
-      return res.redirect(`${FRONTEND}/login?error=server_error`);
+    if (err || !user) {
+      return res.redirect(`${FRONTEND}/?error=unauthorized`);
     }
 
-    if (!user) {
-      // No user found matching email+month
-      return res.redirect(`${FRONTEND}/login?error=fake_user`);
-    }
-
-    // Log the user in (establish session)
     req.logIn(user, (loginErr) => {
       if (loginErr) {
-        console.error("Login error:", loginErr);
-        return res.redirect(`${FRONTEND}/login?error=server_error`);
+        return res.redirect(`${FRONTEND}/?error=server_error`);
       }
-      // Success -> dashboard
+
       return res.redirect(`${FRONTEND}/dashboard`);
     });
   })(req, res, next);
 });
 
-// Check login status
+/* =====================================================
+   STEP 3: Auth Check (🔥 FIXED – NO CACHE)
+===================================================== */
 router.get("/check", (req, res) => {
-  if (req.isAuthenticated && req.isAuthenticated()) {
-    res.json({ user: req.user });
-  } else {
-    res.status(401).json({ message: "Not logged in" });
+  // 🚫 Disable caching completely (VERY IMPORTANT)
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.setHeader("Surrogate-Control", "no-store");
+
+  if (req.isAuthenticated()) {
+    return res.status(200).json({
+      ok: true,
+      user: req.user,
+    });
   }
+
+  return res.status(401).json({
+    ok: false,
+    message: "Not logged in",
+  });
 });
 
-// Logout
+/* =====================================================
+   DEBUG ROUTE (TEMP)
+===================================================== */
+router.get("/debug/session", (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    authenticated: req.isAuthenticated(),
+    user: req.user,
+    session: req.session,
+  });
+});
+
+/* =====================================================
+   LOGOUT
+===================================================== */
 router.get("/logout", (req, res) => {
   req.logout(() => {
-    if (req.session) req.session.authMonth = null;
-    res.json({ message: "Logged out" });
+    req.session.destroy(() => {
+      res.clearCookie("connect.sid");
+      res.json({ message: "Logged out" });
+    });
   });
 });
 
