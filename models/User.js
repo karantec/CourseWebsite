@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  allowedMonths: {
+    type: [String], // MUST be array
+    default: [],
+  },
   role: {
     type: String,
     default: "student",
