@@ -33,7 +33,11 @@ export default async function syncUsers() {
 
     for (const row of rows) {
       const [name, email, month, role] = row;
-      if (!email || !month) continue;
+
+      if (!email || !month) {
+        console.log("⛔ Skipping row (email/month missing):", row);
+        continue;
+      }
 
       const normalizedEmail = email.toLowerCase().trim();
       const normalizedMonth = month.trim();
@@ -44,13 +48,11 @@ export default async function syncUsers() {
           $set: {
             name,
             email: normalizedEmail,
+            month: normalizedMonth, // ✅ FIXED HERE
             role: role || "student",
           },
-          $addToSet: {
-            allowedMonths: normalizedMonth,
-          },
         },
-        { upsert: true }
+        { upsert: true, new: true }
       );
 
       console.log(`✅ Synced: ${normalizedEmail} → ${normalizedMonth}`);
@@ -58,6 +60,6 @@ export default async function syncUsers() {
 
     console.log("🎉 Google Sheet sync completed");
   } catch (err) {
-    console.error("❌ Sync failed:", err.message);
+    console.error("❌ Sync failed:", err);
   }
 }
