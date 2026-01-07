@@ -28,30 +28,32 @@ app.set("trust proxy", 1);
 ================================ */
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://www.kumarkdsacourse.in"],
+    origin: ["https://www.kumarkdsacourse.in"],
     credentials: true,
   })
 );
 
 app.use(express.json());
-
+app.set("trust proxy", 1);
 /* ==============================
    SESSION (PRODUCTION SAFE)
 ================================ */
 app.use(
   session({
-    name: "sessionId",
+    name: "connect.sid", // ✅ recommended
     secret: process.env.SESSION_SECRET || "dev-secret",
     resave: false,
     saveUninitialized: false,
     proxy: true,
+
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
       collectionName: "sessions",
     }),
+
     cookie: {
       httpOnly: true,
-      secure: isProd, // ✅ false locally
+      secure: isProd, // true on Render
       sameSite: isProd ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
