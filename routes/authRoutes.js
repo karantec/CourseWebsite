@@ -2,75 +2,54 @@ import express from "express";
 import passport from "passport";
 
 const router = express.Router();
-const FRONTEND = "https://www.kumarkdsacourse.in";
-
+const FRONTEND_URL = "http://localhost:3000";
 /* =====================================================
    STEP 1: Start Google Login
 ===================================================== */
-router.get(
-  "/google",
-  (req, res, next) => {
-    const { month } = req.query;
+router.get("/google", (req, res, next) => {
+  const { month } = req.query;
 
-    if (!month) {
-      return res.redirect(`${FRONTEND}/?error=select_month`);
-    }
+  if (!month) {
+    return res.redirect(`${FRONTEND_URL}/?error=select_month`);
+  }
 
-    req.session.authMonth = month;
-    next();
-  },
   passport.authenticate("google", {
     scope: ["profile", "email"],
-  })
-);
-
-/* =====================================================
-   STEP 2: Google Callback
-===================================================== */
-router.get("/google/callback", (req, res, next) => {
-  passport.authenticate("google", (err, user) => {
-    req.session.authMonth = null;
-
-    if (err || !user) {
-      return res.redirect(`${FRONTEND}/?error=unauthorized`);
-    }
-
-    req.logIn(user, (loginErr) => {
-      if (loginErr) {
-        return res.redirect(`${FRONTEND}/?error=server_error`);
-      }
-
-      return res.redirect(`${FRONTEND}/dashboard`);
-    });
+    state: JSON.stringify({ month }), // 🔥 FIX
   })(req, res, next);
 });
 
+/* ============================
+   GOOGLE CALLBACK
+============================ */
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "http://localhost:3000/?error=unauthorized",
+  }),
+  (req, res) => {
+    // 🚫 DO NOT redirect by month
+    // ✅ ALWAYS redirect to dashboard
+    res.redirect("http://localhost:3000/dashboard");
+  }
+);
 /* =====================================================
    STEP 3: Auth Check (🔥 FIXED – NO CACHE)
 ===================================================== */
 router.get("/check", (req, res) => {
-  // 🚫 Disable caching completely (VERY IMPORTANT)
-  res.setHeader(
-    "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate"
-  );
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
-  res.setHeader("Surrogate-Control", "no-store");
-
-  if (req.isAuthenticated()) {
-    return res.status(200).json({
-      ok: true,
-      user: req.user,
-    });
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ ok: false });
   }
 
-  return res.status(401).json({
-    ok: false,
-    message: "Not logged in",
+  return res.json({
+    ok: true,
+    user: {
+      email: req.user.email,
+      month: req.user.month, // 🔥 THIS IS KEY
+      role: req.user.role,
+    },
   });
 });
-
 /* =====================================================
    DEBUG ROUTE (TEMP)
 ===================================================== */

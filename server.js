@@ -5,25 +5,30 @@ import dotenv from "dotenv";
 import session from "express-session";
 import passport from "passport";
 import cors from "cors";
+import MongoStore from "connect-mongo";
+
 import "./auth.js";
 import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import { ensureAuth } from "./middleware/authMiddleware.js";
+import { startCronJobs } from "./cron/index.js";
 
 dotenv.config();
+
 const app = express();
+const isProd = process.env.NODE_ENV === "production";
 
 /* ==============================
    TRUST PROXY (MUST BE FIRST)
 ================================ */
-app.set("trust proxy", 1); // REQUIRED on Render
+app.set("trust proxy", 1);
 
 /* ==============================
    CORS
 ================================ */
 app.use(
   cors({
-    origin: ["https://www.kumarkdsacourse.in", "http://localhost:3000"],
+    origin: ["http://localhost:3000"],
     credentials: true,
   })
 );
@@ -31,27 +36,23 @@ app.use(
 app.use(express.json());
 
 /* ==============================
-   SESSION STORE (CRITICAL FIX)
+   SESSION (PRODUCTION SAFE)
 ================================ */
-// ⚠️ DO NOT USE MEMORY STORE IN PROD
-// Render restarts = session lost
-import MongoStore from "connect-mongo";
-
 app.use(
   session({
     name: "sessionId",
     secret: process.env.SESSION_SECRET || "dev-secret",
     resave: false,
     saveUninitialized: false,
-    proxy: true, // 🔥 IMPORTANT
+    proxy: true,
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
       collectionName: "sessions",
     }),
     cookie: {
       httpOnly: true,
-      secure: true, // HTTPS only
-      sameSite: "none", // cross-domain
+      secure: isProd, // ✅ false locally
+      sameSite: isProd ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
@@ -72,11 +73,18 @@ app.use("/course", ensureAuth, courseRoutes);
 app.disable("etag");
 
 /* ==============================
-   DB CONNECT
+   DB CONNECT + START CRON
 ================================ */
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
+  .then(() => {
+    console.log("✅ MongoDB Connected");
+
+    // 🔥 START GOOGLE SHEET → DB AUTO SYNC
+    startCronJobs();
+
+    console.log("🔄 Google Sheet sync cron started");
+  })
   .catch((err) => console.error("❌ DB Connection Error:", err));
 
 /* ==============================

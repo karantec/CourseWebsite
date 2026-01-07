@@ -23,28 +23,31 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "https://coursewebsite-1.onrender.com/auth/google/callback",
-      passReqToCallback: true,
+      callbackURL: "http://localhost:5000/auth/google/callback",
+      passReqToCallback: true, // 🔥 REQUIRED
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
         const email = profile.emails?.[0]?.value;
-        const month = req.session.authMonth;
+        if (!email) return done(null, false);
 
-        if (!email || !month) {
-          return done(null, false);
-        }
+        // 🔥 month comes from OAuth state
+        const state = JSON.parse(req.query.state || "{}");
+        const selectedMonth = state.month;
 
-        const user = await User.findOne({ email, month });
+        if (!selectedMonth) return done(null, false);
+
+        // 🔥 CRITICAL FIX
+        const user = await User.findOne({
+          email,
+          month: selectedMonth,
+        });
 
         if (!user) {
+          // ❌ illegal login (wrong month)
           return done(null, false);
         }
 
-        if (!user.googleId) user.googleId = profile.id;
-        if (!user.name) user.name = profile.displayName;
-
-        await user.save();
         return done(null, user);
       } catch (err) {
         return done(err);

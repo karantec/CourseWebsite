@@ -10,37 +10,12 @@ async function seed() {
   const users = [
     [
       {
-        name: "Bhargab Sarmah",
-        email: "bhargabsarmah30@gmail.com",
-        month: "January",
-        role: "student",
-      },
-      {
-        name: "Bhargab Sarmah",
-        email: "karanrana3095@gmail.com",
-        month: "January",
-        role: "student",
-      },
-      {
-        name: "Aaron Magic",
-        email: "aaronmagicnew@gmail.com",
-        month: "January",
-        role: "student",
-      },
-      {
-        name: "Aaron Magic",
-        email: "karangujar43@gmail.com",
+        name: "KARAN RANA  ",
+        email: "sonutech04@gmail.com",
         month: "January",
         role: "student",
       },
     ],
-
-    // {
-    //   name: "Priya Singh",
-    //   email: "priya@example.com",
-    //   month: "March",
-    //   role: "student",
-    // },
   ];
 
   for (const u of users) {
