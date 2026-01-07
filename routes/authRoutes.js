@@ -2,7 +2,7 @@ import express from "express";
 import passport from "passport";
 
 const router = express.Router();
-const FRONTEND_URL = "http://localhost:3000";
+const FRONTEND_URL = "https://www.kumarkdsacourse.in";
 /* =====================================================
    STEP 1: Start Google Login
 ===================================================== */
@@ -25,12 +25,12 @@ router.get("/google", (req, res, next) => {
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "http://localhost:3000/?error=unauthorized",
+    failureRedirect: "https://www.kumarkdsacourse.in/?error=unauthorized",
   }),
   (req, res) => {
     // 🚫 DO NOT redirect by month
     // ✅ ALWAYS redirect to dashboard
-    res.redirect("http://localhost:3000/dashboard");
+    res.redirect("https://www.kumarkdsacourse.in/dashboard");
   }
 );
 /* =====================================================
