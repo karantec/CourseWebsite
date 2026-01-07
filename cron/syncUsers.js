@@ -35,21 +35,28 @@ export default async function syncUsers() {
       const [name, email, month, role] = row;
       if (!email || !month) continue;
 
+      const normalizedEmail = email.toLowerCase().trim();
+      const normalizedMonth = month.trim();
+
       await User.findOneAndUpdate(
-        { email: email.toLowerCase(), month },
+        { email: normalizedEmail },
         {
-          name,
-          email: email.toLowerCase(),
-          month,
-          role: role || "student",
+          $set: {
+            name,
+            email: normalizedEmail,
+            role: role || "student",
+          },
+          $addToSet: {
+            allowedMonths: normalizedMonth,
+          },
         },
-        { upsert: true, new: true }
+        { upsert: true }
       );
 
-      console.log(`✅ Synced: ${email} (${month})`);
+      console.log(`✅ Synced: ${normalizedEmail} → ${normalizedMonth}`);
     }
 
-    console.log("🎉 Sync completed");
+    console.log("🎉 Google Sheet sync completed");
   } catch (err) {
     console.error("❌ Sync failed:", err.message);
   }
