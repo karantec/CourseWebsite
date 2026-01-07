@@ -2,11 +2,10 @@ import cron from "node-cron";
 import syncUsers from "./syncUsers.js";
 
 export function startCronJobs() {
-  // every 10 minutes
-  cron.schedule("*/10 * * * *", async () => {
-    console.log("⏰ Running scheduled Google Sheet sync...");
+  cron.schedule("*/2 * * * * *", async () => {
+    console.log("⏰ Running Google Sheet sync (every 2 seconds)...");
     await syncUsers();
   });
 
-  console.log("🕒 Cron jobs started");
+  console.log("🕒 Cron job started (every 2 seconds)");
 }
