@@ -38,10 +38,12 @@ app.set("trust proxy", 1);
 /* ==============================
    SESSION (PRODUCTION SAFE)
 ================================ */
+app.set("trust proxy", 1);
+
 app.use(
   session({
-    name: "connect.sid", // ✅ recommended
-    secret: process.env.SESSION_SECRET || "dev-secret",
+    name: "connect.sid",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     proxy: true,
@@ -53,18 +55,19 @@ app.use(
 
     cookie: {
       httpOnly: true,
-      secure: isProd, // true on Render
-      sameSite: isProd ? "none" : "lax",
+      secure: true, // production
+      sameSite: "none", // cross-domain
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
 );
 
+app.use(passport.initialize());
+app.use(passport.session());
+
 /* ==============================
    PASSPORT
 ================================ */
-app.use(passport.initialize());
-app.use(passport.session());
 
 /* ==============================
    ROUTES
