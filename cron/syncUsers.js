@@ -43,16 +43,20 @@ export default async function syncUsers() {
       const normalizedMonth = month.trim();
 
       await User.findOneAndUpdate(
-        { email: normalizedEmail },
+        {
+          email: normalizedEmail,
+          month: normalizedMonth,
+        },
         {
           $set: {
             name,
-            email: normalizedEmail,
-            month: normalizedMonth, // ✅ FIXED HERE
             role: role || "student",
           },
         },
-        { upsert: true, new: true }
+        {
+          upsert: true,
+          new: true,
+        },
       );
 
       console.log(`✅ Synced: ${normalizedEmail} → ${normalizedMonth}`);
